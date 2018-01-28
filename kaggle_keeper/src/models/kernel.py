@@ -17,7 +17,7 @@ class Kernel(DeclarativeBase):
     __tablename__ = "kernel"
 
     id = sa.Column(sa.Integer, primary_key=True)
-    title = sa.Column(sa.Unicode(20))
+    title = sa.Column(sa.Unicode(100))
     lang = sa.Column(sa.Enum(Lang))
     notebook = sa.Column(sa.Boolean)
     votes = sa.Column(sa.Integer)

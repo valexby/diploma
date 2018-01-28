@@ -18,7 +18,8 @@ CREATE TABLE category (
 CREATE TABLE technology (
        id INTEGER NOT NULL AUTO_INCREMENT,
        title VARCHAR(100),
-       PRIMARY KEY(id));
+       PRIMARY KEY(id),
+       UNIQUE(title));
 
 CREATE TABLE data_link (
        id INTEGER NOT NULL AUTO_INCREMENT,

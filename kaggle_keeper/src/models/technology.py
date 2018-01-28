@@ -7,5 +7,5 @@ class Technology(DeclarativeBase):
     __tablename__ = "technology"
 
     id = sa.Column(sa.Integer, primary_key=True)
-    title = sa.Column(sa.Unicode(20))
+    title = sa.Column(sa.Unicode(100), unique=True)
     kernels = orm.relationship(TechnologyRelation, back_populates="technology")

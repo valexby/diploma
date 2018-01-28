@@ -15,8 +15,6 @@ def get_python_id(language, ace_language, notebook):
     response = requests.get(init_url)
     while True:
         for kernel in response.json():
-            import ipdb
-            ipdb.set_trace()
             if kernel['languageName'] == language \
                and kernel['aceLanguageName'] == ace_language \
                and kernel['isNotebook'] == notebook:

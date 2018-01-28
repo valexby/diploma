@@ -56,7 +56,6 @@ class BaseApp():
             'group': 'everyone',
             'pageSize': TOKEN_LEN,
         }
-        new_models = []
         if self.newest_id:
             self.get_greatest(params, lambda x: x <= self.newest_id)
         else:
@@ -69,7 +68,6 @@ class BaseApp():
 
     def get_greatest(self, params, stop_condition):
         kernel_list_url = 'https://www.kaggle.com/kernels.json'
-        kernels = []
         while True:
             response = requests.get(kernel_list_url, params)
             params['after'] = response.json()[-1]['id']
@@ -82,15 +80,42 @@ class BaseApp():
                     self.session.flush()
                     self.session.commit()
                     return
-                kernels.append(self.save_kernel_info(kernel))
+                self.save_kernel_info(kernel)
             self.session.flush()
             self.session.commit()
 
     def save_kernel_info(self, kernel_json):
+        msg = 'Try to process kernel id: {} lang: {} notebook: {} scr_id: {}'.format(kernel_json['id'],
+                                                                                         kernel_json['aceLanguageName'],
+                                                                                         kernel_json['isNotebook'],
+                                                                                         kernel_json['scriptVersionId'])
+        log.debug(msg)
         new_kernel = db.Kernel(id=kernel_json['id'],
                                title=kernel_json['title'])
-        self session.add(new_kernel)
-        return new_kernel
+        download_url = 'https://www.kaggle.com/kernels/sourceurl/{}'
+        response = requests.get(download_url.format(kernel_json['scriptVersionId']))
+        download_url = response.content.decode('utf-8')
+        techs = self.get_technology(download_url,
+                                    kernel_json['aceLanguageName'],
+                                    kernel_json['isNotebook'])
+        for tech in techs:
+            rel = db.TechnologyRelation(technology=tech,
+                                        kernel=new_kernel)
+            self.session.add(rel)
+        self.session.add(new_kernel)
+
+    def get_technology(self, src_url, lang, notebook):
+        script = os.path.join(basedir, 'get_tech.sh')
+        script += ' \"{}\" \"{}\" \"{}\"'.format(src_url, lang, notebook)
+        names = os.popen(script).read().split()
+        old = self.session.query(db.Technology). \
+              filter(db.Technology.title.in_(names)).all()
+        old_names = [tech.title for tech in old]
+        new_names = set(names) - set(old_names)
+        new_tech = [db.Technology(title=title) for title in new_names]
+        self.session.add_all(new_tech)
+        return old + new_tech
+
 
     def run(self):
         self.get_kernels()

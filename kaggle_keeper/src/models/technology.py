@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from src.models import sa, DeclarativeBase
+from src.models import sa, orm, DeclarativeBase, TechnologyRelation
 
 class Technology(DeclarativeBase):
     """The model for Book data"""
@@ -8,3 +8,4 @@ class Technology(DeclarativeBase):
 
     id = sa.Column(sa.Integer, primary_key=True)
     title = sa.Column(sa.Unicode(20))
+    kernels = orm.relationship(TechnologyRelation, back_populates="technology")

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """base_app for MediaLocker"""
 
-import sys
 import os
+import requests
+
 basedir, _ = os.path.split(__file__)
 
 # logging
@@ -28,7 +29,10 @@ class BaseApp():
         log.debug('start init')
 
         db_driver = "mysql+pymysql"
-        db_url = db.sa.engine.url.URL(db_driver, host='localhost', database='kaggle', username='root')
+        db_url = db.sa.engine.url.URL(db_driver,
+                                      host='localhost',
+                                      database='kaggle',
+                                      username='root')
         log.debug("db: %s\n\n" % (db_url))
 
         log.debug("connect db")
@@ -40,7 +44,53 @@ class BaseApp():
         db.metadata.create_all(engine)
         log.debug("db created")
 
+        self.newest_id = self.session.query(db.sa.func.max(db.Kernel.id)).first()[0]
+        self.oldest_id = self.session.query(db.sa.func.min(db.Kernel.id)).first()[0]
+
         log.debug('end init')
 
+    def get_kernels(self):
+        TOKEN_LEN = 10
+        params = {
+            'sortBy': 'creation',
+            'group': 'everyone',
+            'pageSize': TOKEN_LEN,
+        }
+        new_models = []
+        if self.newest_id:
+            self.get_greatest(params, lambda x: x <= self.newest_id)
+        else:
+            self.get_greatest(params, lambda x: False)
+        params['after'] = self.oldest_id
+        if self.oldest_id:
+            self.get_greatest(params, lambda x: x >= self.oldest_id)
+        else:
+            self.get_greatest(params, lambda x: False)
+
+    def get_greatest(self, params, stop_condition):
+        kernel_list_url = 'https://www.kaggle.com/kernels.json'
+        kernels = []
+        while True:
+            response = requests.get(kernel_list_url, params)
+            params['after'] = response.json()[-1]['id']
+            for kernel in response.json():
+                try:
+                    kernel['title'].encode('latin-1')
+                except UnicodeEncodeError:
+                    continue
+                if stop_condition(kernel['id']):
+                    self.session.flush()
+                    self.session.commit()
+                    return
+                kernels.append(self.save_kernel_info(kernel))
+            self.session.flush()
+            self.session.commit()
+
+    def save_kernel_info(self, kernel_json):
+        new_kernel = db.Kernel(id=kernel_json['id'],
+                               title=kernel_json['title'])
+        self session.add(new_kernel)
+        return new_kernel
+
     def run(self):
-        pass
+        self.get_kernels()

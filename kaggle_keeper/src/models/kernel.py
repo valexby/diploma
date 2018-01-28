@@ -2,7 +2,11 @@
 
 import enum
 
-from src.models import sa, DeclarativeBase
+from sqlalchemy.ext.declarative import declared_attr
+from src.models import sa, orm, DeclarativeBase
+from src.models.categoty_relation import CategoryRelation
+from src.models.technology_relation import TechnologyRelation
+from src.models.data_link_relation import DataLinkRelation
 
 class Lang(enum.Enum):
     r = 'R'
@@ -17,3 +21,9 @@ class Kernel(DeclarativeBase):
     lang = sa.Column(sa.Enum(Lang))
     notebook = sa.Column(sa.Boolean)
     votes = sa.Column(sa.Integer)
+    categories = orm.relationship(CategoryRelation,
+                                  back_populates="kernel")
+    technologies = orm.relationship(TechnologyRelation,
+                                   back_populates="kernel")
+    data_links = orm.relationship(DataLinkRelation,
+                                  back_populates="kernel")

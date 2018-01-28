@@ -3,8 +3,8 @@ CREATE DATABASE kaggle;
 USE kaggle;
 
 CREATE TABLE kernel (
-       id INTEGER NOT NULL AUTO_INCREMENT,
-       title VARCHAR(20),
+       id INTEGER NOT NULL,
+       title VARCHAR(100),
        lang ENUM('R', 'Python'),
        notebook BOOLEAN,
        votes INTEGER,
@@ -12,18 +12,18 @@ CREATE TABLE kernel (
 
 CREATE TABLE category (
        id INTEGER NOT NULL AUTO_INCREMENT,
-       title VARCHAR(20),
+       title VARCHAR(100),
        PRIMARY KEY(id));
 
 CREATE TABLE technology (
        id INTEGER NOT NULL AUTO_INCREMENT,
-       title VARCHAR(20),
+       title VARCHAR(100),
        PRIMARY KEY(id));
 
 CREATE TABLE data_link (
        id INTEGER NOT NULL AUTO_INCREMENT,
-       link VARCHAR(20),
-       title VARCHAR(20),
+       link VARCHAR(100),
+       title VARCHAR(100),
        PRIMARY KEY(id));
 
 CREATE TABLE category_relation (

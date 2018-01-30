@@ -33,6 +33,7 @@ class BaseApp():
                                       host='localhost',
                                       database='kaggle',
                                       username='root')
+        db_url = str(db_url) + '?charset=utf8'
         log.debug("db: %s\n\n" % (db_url))
 
         log.debug("connect db")
@@ -68,7 +69,6 @@ class BaseApp():
 
     def get_greatest(self, params, stop_condition):
         kernel_list_url = 'https://www.kaggle.com/kernels.json'
-        params['after'] = 569849
         while True:
             try:
                 response = requests.get(kernel_list_url, params)
@@ -82,10 +82,6 @@ class BaseApp():
                 continue
             params['after'] = response.json()[-1]['id']
             for kernel in response.json():
-                try:
-                    kernel['title'].encode('latin-1')
-                except UnicodeEncodeError:
-                    continue
                 if stop_condition(kernel['id']):
                     self.session.flush()
                     self.session.commit()

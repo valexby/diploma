@@ -2,7 +2,7 @@
 
 import enum
 
-from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.dialects.mysql import VARCHAR
 from src.models import sa, orm, DeclarativeBase
 from src.models.categoty_relation import CategoryRelation
 from src.models.technology_relation import TechnologyRelation
@@ -17,7 +17,7 @@ class Kernel(DeclarativeBase):
     __tablename__ = "kernel"
 
     id = sa.Column(sa.Integer, primary_key=True)
-    title = sa.Column(sa.Unicode(100))
+    title = sa.Column(VARCHAR(100, charset='utf8'))
     lang = sa.Column(sa.Enum(Lang))
     notebook = sa.Column(sa.Boolean)
     votes = sa.Column(sa.Integer)

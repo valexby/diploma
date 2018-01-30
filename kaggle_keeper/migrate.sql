@@ -4,7 +4,7 @@ USE kaggle;
 
 CREATE TABLE kernel (
        id INTEGER NOT NULL,
-       title VARCHAR(100),
+       title VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
        lang ENUM('R', 'Python'),
        notebook BOOLEAN,
        votes INTEGER,
@@ -12,21 +12,21 @@ CREATE TABLE kernel (
 
 CREATE TABLE category (
        id INTEGER NOT NULL AUTO_INCREMENT,
-       title VARCHAR(100),
-       description VARCHAR(300),
+       title VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+       description VARCHAR(300) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
        PRIMARY KEY(id),
        UNIQUE(title));
 
 CREATE TABLE technology (
        id INTEGER NOT NULL AUTO_INCREMENT,
-       title VARCHAR(100),
+       title VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
        PRIMARY KEY(id),
        UNIQUE(title));
 
 CREATE TABLE data_link (
        id INTEGER NOT NULL AUTO_INCREMENT,
-       link VARCHAR(100),
-       title VARCHAR(100),
+       link VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+       title VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
        PRIMARY KEY(id),
        UNIQUE(title));
 

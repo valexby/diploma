@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 url=${1}
 lang=${2}
@@ -37,4 +37,4 @@ if [ ${lang} = "r" ] || [ ${lang} = "markdown" ]; then
     grep -oP 'library\(\K[\w\s]+' ${tmp_dir}/downloaded
 fi
 
-# rm -rf "${tmp_dir}"
+rm -rf "${tmp_dir}"

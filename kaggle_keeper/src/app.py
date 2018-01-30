@@ -69,7 +69,17 @@ class BaseApp():
     def get_greatest(self, params, stop_condition):
         kernel_list_url = 'https://www.kaggle.com/kernels.json'
         while True:
-            response = requests.get(kernel_list_url, params)
+            try:
+                response = requests.get(kernel_list_url, params)
+                import ipdb
+                ipdb.set_trace()
+            except Exception as error:
+                log_file = open('log.txt', "a")
+                log_file.write("Crushed on GET {} with {} with {}".format(kernel_list_url,
+                                                                          params,
+                                                                          error))
+                log_file.close()
+                continue
             params['after'] = response.json()[-1]['id']
             for kernel in response.json():
                 try:
@@ -85,29 +95,44 @@ class BaseApp():
             self.session.commit()
 
     def save_kernel_info(self, kernel_json):
-        msg = 'Try to process kernel id: {} lang: {} notebook: {} scr_id: {}'.format(kernel_json['id'],
-                                                                                         kernel_json['aceLanguageName'],
-                                                                                         kernel_json['isNotebook'],
-                                                                                         kernel_json['scriptVersionId'])
-        log.debug(msg)
+        log_msg = 'Try to process kernel id: {} lang: {} notebook: {} scr_id: {}'
+        log_msg = log_msg.format(kernel_json['id'],
+                                 kernel_json['aceLanguageName'],
+                                 kernel_json['isNotebook'],
+                                 kernel_json['scriptVersionId'])
+        log.debug(log_msg)
         new_kernel = db.Kernel(id=kernel_json['id'],
                                title=kernel_json['title'])
         download_url = 'https://www.kaggle.com/kernels/sourceurl/{}'
-        response = requests.get(download_url.format(kernel_json['scriptVersionId']))
-        download_url = response.content.decode('utf-8')
-        techs = self.get_technology(download_url,
-                                    kernel_json['aceLanguageName'],
-                                    kernel_json['isNotebook'])
-        for tech in techs:
-            rel = db.TechnologyRelation(technology=tech,
-                                        kernel=new_kernel)
-            self.session.add(rel)
+        download_url = download_url.format(kernel_json['scriptVersionId'])
+        try:
+            response = requests.get(download_url)
+            download_url = response.content.decode('utf-8')
+            techs = self.get_technology(download_url,
+                                        kernel_json['aceLanguageName'],
+                                        kernel_json['isNotebook'])
+            if not techs:
+                log_file = open('log.txt', 'a')
+                log_file.write(log_msg + '\n')
+                log_file.close()
+            for tech in techs:
+                rel = db.TechnologyRelation(technology=tech,
+                                            kernel=new_kernel)
+                self.session.add(rel)
+        except Exception as e:
+            log_file = open('log.txt', "a")
+            log_file.write(log_msg + ' ')
+            log_file.write("Crushed on GET {} with {}\n".format(download_url, e))
+            log_file.write('Exception: {}\n', type(e))
+            log_file.close()
         self.session.add(new_kernel)
 
     def get_technology(self, src_url, lang, notebook):
         script = os.path.join(basedir, 'get_tech.sh')
         script += ' \"{}\" \"{}\" \"{}\"'.format(src_url, lang, notebook)
         names = os.popen(script).read().split()
+        if not names:
+            return names
         old = self.session.query(db.Technology). \
               filter(db.Technology.title.in_(names)).all()
         old_names = [tech.title for tech in old]

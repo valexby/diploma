@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 url=${1}
 lang=${2}
@@ -20,7 +20,9 @@ fi
 if [ ${lang} = "python" ]; then
     mv ${tmp_dir}/downloaded ${tmp_dir}/downloaded.py
     pipreqs "${tmp_dir}/"
-    grep -oP "\w+(?===)" ${tmp_dir}/requirements.txt
+    if [ -s ${tmp_dir}/requirements.txt ]; then
+        grep -oP "\w+(?===)" ${tmp_dir}/requirements.txt
+    fi
 fi
 
 if [ ${lang} = "markdown" ]; then
@@ -35,4 +37,4 @@ if [ ${lang} = "r" ] || [ ${lang} = "markdown" ]; then
     grep -oP 'library\(\K[\w\s]+' ${tmp_dir}/downloaded
 fi
 
-rm -rf "${tmp_dir}"
+# rm -rf "${tmp_dir}"

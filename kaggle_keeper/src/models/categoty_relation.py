@@ -9,6 +9,8 @@ class CategoryRelation(DeclarativeBase):
 
     id = sa.Column(sa.Integer, primary_key=True)
     kernel_id = sa.Column(sa.Integer, ForeignKey("kernel.id"))
+    competition_id = sa.Column(sa.Integer, ForeignKey("competition.id"))
     category_id = sa.Column(sa.Integer, ForeignKey("category.id"))
     category = orm.relationship("Category", back_populates="kernels")
     kernel = orm.relationship("Kernel", back_populates="categories")
+    competition = orm.relationship("Competition", back_populates="categories")

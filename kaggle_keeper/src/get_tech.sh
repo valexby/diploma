@@ -11,7 +11,6 @@ fi
 
 mkdir ${tmp_dir}
 wget -O "${tmp_dir}/downloaded" ${url} &> /dev/null
-# wget -i ${tmp_dir}/link -O "${tmp_dir}/downloaded" ${url} &> /dev/null
 
 if [ ${notebook} = "True" ]; then
     jupyter nbconvert --to script "${tmp_dir}/downloaded" &> /dev/null

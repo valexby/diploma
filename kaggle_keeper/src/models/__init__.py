@@ -43,7 +43,8 @@ def init_model(engine):
 #
 # remember to define __ALL__ in each module
 
-# Import your model modules here.
+# Import your model modules her.
+from src.models.competition import *
 from src.models.kernel import *
 from src.models.category import *
 from src.models.categoty_relation import *

@@ -3,14 +3,15 @@
 import enum
 
 from sqlalchemy.dialects.mysql import VARCHAR
+from sqlalchemy.schema import ForeignKey
 from src.models import sa, orm, DeclarativeBase
 from src.models.categoty_relation import CategoryRelation
 from src.models.technology_relation import TechnologyRelation
 from src.models.data_link_relation import DataLinkRelation
 
 class Lang(enum.Enum):
-    r = 'R'
-    python = 'Python'
+    R = 'R'
+    Python = 'Python'
 
 class Kernel(DeclarativeBase):
     """The model for Book data"""
@@ -21,6 +22,10 @@ class Kernel(DeclarativeBase):
     lang = sa.Column(sa.Enum(Lang))
     notebook = sa.Column(sa.Boolean)
     votes = sa.Column(sa.Integer)
+    best_score = sa.Column(sa.FLOAT)
+    source_version = sa.Column(sa.Integer)
+    competition_id = sa.Column(sa.Integer, ForeignKey("competition.id"))
+    competition = orm.relationship("Competition", back_populates="kernels")
     categories = orm.relationship(CategoryRelation,
                                   back_populates="kernel")
     technologies = orm.relationship(TechnologyRelation,

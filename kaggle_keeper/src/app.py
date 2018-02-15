@@ -45,9 +45,6 @@ class BaseApp():
         db.metadata.create_all(engine)
         log.debug("db created")
 
-        self.newest_id = self.session.query(db.sa.func.max(db.Kernel.id)).first()[0]
-        self.oldest_id = self.session.query(db.sa.func.min(db.Kernel.id)).first()[0]
-
         log.debug('end init')
 
     def get_kernels(self):
@@ -57,17 +54,43 @@ class BaseApp():
             'group': 'everyone',
             'pageSize': TOKEN_LEN,
         }
-        if self.newest_id:
-            self.get_greatest(params, lambda x: x <= self.newest_id)
-        else:
-            self.get_greatest(params, lambda x: False)
-        params['after'] = self.oldest_id
-        if self.oldest_id:
-            self.get_greatest(params, lambda x: x >= self.oldest_id)
-        else:
-            self.get_greatest(params, lambda x: False)
+        self.get_missing(params)
 
-    def get_greatest(self, params, stop_condition):
+    def get_competitions(self):
+        competitions_url = 'https://www.kaggle.com/competitions.json'
+        PAGE_SIZE = 20
+        params = {'sortBy': 'recentlyCreated',
+                  'group': 'general',
+                  'page': 1,
+                  'pageSize': PAGE_SIZE,
+        }
+        response = requests.get(competitions_url, params)
+        total_number = response.json()['pagedCompetitionGroup']['totalCompetitions']
+        for page in range(1, (total_number // PAGE_SIZE) + 2):
+            params['page'] = page
+            response = requests.get(competitions_url, params)
+            competitions = response.json()['pagedCompetitionGroup']['competitions']
+            for competition in competitions:
+                self.save_competition_info(competition)
+
+    def save_competition_info(self, competition_json):
+        TOKEN_LEN = 10
+        competition = self.session.query(db.Competition).filter(db.Competition.id == competition_json['competitionId']).first()
+        if not competition:
+            competition = db.Competition(id=competition_json['competitionId'],
+                                         title=competition_json['competitionTitle'])
+            self.session.add(competition)
+            self.session.flush()
+            self.session.commit()
+        params = {
+            'sortBy': 'creation',
+            'group': 'everyone',
+            'pageSize': TOKEN_LEN,
+            'competitionId': competition.id
+        }
+        self.get_missing(params)
+
+    def get_missing(self, params):
         kernel_list_url = 'https://www.kaggle.com/kernels.json'
         while True:
             try:
@@ -80,13 +103,22 @@ class BaseApp():
                 log_file.write('Exception: {}\n'.format(type(error)))
                 log_file.close()
                 continue
+            if not response.json():
+                return
             params['after'] = response.json()[-1]['id']
             for kernel in response.json():
-                if stop_condition(kernel['id']):
-                    self.session.flush()
-                    self.session.commit()
-                    return
-                self.save_kernel_info(kernel)
+                db_kernel = self.session.query(db.Kernel).filter(db.Kernel.id == kernel['id']).first()
+                competition_id = None
+                if db_kernel and db_kernel.source_version != kernel['scriptVersionId']:
+                    competition_id = db_kernel.competition_id
+                    self.session.delete(db_kernel)
+                    db_kernel = None
+                if not db_kernel:
+                    newbie = self.save_kernel_info(kernel)
+                    if not competition_id is None:
+                        newbie.competition_id = competition_id
+                    elif 'competitionId' in params:
+                        newbie.competition_id = params['competitionId']
             self.session.flush()
             self.session.commit()
 
@@ -101,9 +133,11 @@ class BaseApp():
                                title=kernel_json['title'],
                                lang=kernel_json['aceLanguageName'],
                                notebook=kernel_json['isNotebook'],
-                               votes=kernel_json['totalVotes'])
+                               votes=kernel_json['totalVotes'],
+                               best_score=kernel_json['bestPublicScore'],
+                               source_version=kernel_json['scriptVersionId'])
         download_url = 'https://www.kaggle.com/kernels/sourceurl/{}'
-        download_url = download_url.format(kernel_json['scriptVersionId'])
+        download_url = download_url.format(new_kernel.source_version)
         try:
             response = requests.get(download_url)
             download_url = response.content.decode('utf-8')
@@ -131,6 +165,7 @@ class BaseApp():
                                       kernel=new_kernel)
             self.session.add(rel)
         self.session.add(new_kernel)
+        return new_kernel
 
     def get_categories(self, kernel):
         cat_dict = {cat['name'] : cat for cat in kernel['categories']['categories']}
@@ -178,6 +213,6 @@ class BaseApp():
         self.session.add_all(new_data_links)
         return new_data_links + old
 
-
     def run(self):
-        self.get_kernels()
+        # self.get_kernels()
+        self.get_competitions()

@@ -11,7 +11,7 @@ CREATE TABLE competition (
 CREATE TABLE kernel (
        id INTEGER NOT NULL,
        title VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
-       lang ENUM('R', 'Python'),
+       lang ENUM('R', 'Python', 'markdown'),
        notebook BOOLEAN,
        votes INTEGER,
        best_score FLOAT,

@@ -23,16 +23,18 @@ log.debug("logging is setup")
 import src.models as db
 log.debug("db import")
 
+
 class BaseApp():
 
     def __init__(self):
         log.debug('start init')
 
-        db_driver = "mysql+pymysql"
+        db_driver = 'mysql+oursql'
         db_url = db.sa.engine.url.URL(db_driver,
                                       host='localhost',
                                       database='kaggle',
-                                      username='root')
+                                      username='root',
+                                      password='root')
         db_url = str(db_url) + '?charset=utf8'
         log.debug("db: %s\n\n" % (db_url))
 
@@ -62,8 +64,7 @@ class BaseApp():
         params = {'sortBy': 'recentlyCreated',
                   'group': 'general',
                   'page': 1,
-                  'pageSize': PAGE_SIZE,
-        }
+                  'pageSize': PAGE_SIZE}
         response = requests.get(competitions_url, params)
         total_number = response.json()['pagedCompetitionGroup']['totalCompetitions']
         for page in range(1, (total_number // PAGE_SIZE) + 2):
@@ -82,6 +83,12 @@ class BaseApp():
             self.session.add(competition)
             self.session.flush()
             self.session.commit()
+
+        cats = self.get_categories(competition_json)
+        for cat in cats:
+            rel = db.CategoryRelation(category=cat,
+                                      competition=competition)
+            self.session.add(rel)
         params = {
             'sortBy': 'creation',
             'group': 'everyone',
@@ -115,7 +122,7 @@ class BaseApp():
                     db_kernel = None
                 if not db_kernel:
                     newbie = self.save_kernel_info(kernel)
-                    if not competition_id is None:
+                    if competition_id is not None:
                         newbie.competition_id = competition_id
                     elif 'competitionId' in params:
                         newbie.competition_id = params['competitionId']
@@ -167,12 +174,11 @@ class BaseApp():
         self.session.add(new_kernel)
         return new_kernel
 
-    def get_categories(self, kernel):
-        cat_dict = {cat['name'] : cat for cat in kernel['categories']['categories']}
+    def get_categories(self, kaggle_object):
+        cat_dict = {cat['name']: cat for cat in kaggle_object['categories']['categories']}
         if not cat_dict:
             return []
-        old = self.session.query(db.Category). \
-              filter(db.Category.title.in_(cat_dict.keys())).all()
+        old = self.session.query(db.Category).filter(db.Category.title.in_(cat_dict.keys())).all()
         old_names = {cat.title for cat in old}
         new_names = set(cat_dict.keys()) - old_names
         new_categories = []
@@ -189,8 +195,7 @@ class BaseApp():
         names = os.popen(script).read().split()
         if not names:
             return names
-        old = self.session.query(db.Technology). \
-              filter(db.Technology.title.in_(names)).all()
+        old = self.session.query(db.Technology).filter(db.Technology.title.in_(names)).all()
         old_names = [tech.title for tech in old]
         new_names = set(names) - set(old_names)
         new_tech = [db.Technology(title=title) for title in new_names]
@@ -198,11 +203,10 @@ class BaseApp():
         return old + new_tech
 
     def get_data_link(self, kernel):
-        src_dict = {src['name'] : src for src in kernel['dataSources']}
+        src_dict = {src['name']: src for src in kernel['dataSources']}
         if not src_dict:
             return []
-        old = self.session.query(db.DataLink). \
-              filter(db.DataLink.title.in_(src_dict.keys())).all()
+        old = self.session.query(db.DataLink).filter(db.DataLink.title.in_(src_dict.keys())).all()
         old_names = {src.title for src in old}
         new_names = set(src_dict.keys()) - old_names
         new_data_links = []

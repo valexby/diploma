@@ -12,6 +12,7 @@ from src.models.data_link_relation import DataLinkRelation
 class Lang(enum.Enum):
     R = 'R'
     Python = 'Python'
+    markdown = 'markdown'
 
 class Kernel(DeclarativeBase):
     """The model for Book data"""
@@ -29,6 +30,6 @@ class Kernel(DeclarativeBase):
     categories = orm.relationship(CategoryRelation,
                                   back_populates="kernel")
     technologies = orm.relationship(TechnologyRelation,
-                                   back_populates="kernel")
+                                    back_populates="kernel")
     data_links = orm.relationship(DataLinkRelation,
                                   back_populates="kernel")

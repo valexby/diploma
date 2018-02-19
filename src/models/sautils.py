@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 """Utility methods for SQLAlchemy"""
 
 import logging

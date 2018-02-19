@@ -44,6 +44,7 @@ def init_model(engine):
 # remember to define __ALL__ in each module
 
 # Import your model modules her.
+from src.models.base import *
 from src.models.competition import *
 from src.models.kernel import *
 from src.models.category import *
@@ -52,3 +53,4 @@ from src.models.technology import *
 from src.models.technology_relation import *
 from src.models.data_link import *
 from src.models.data_link_relation import *
+from src.models.user import *

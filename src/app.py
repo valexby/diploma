@@ -33,8 +33,7 @@ class BaseApp():
         db_url = db.sa.engine.url.URL(db_driver,
                                       host='localhost',
                                       database='kaggle',
-                                      username='root',
-                                      password='root')
+                                      username='root')
         db_url = str(db_url) + '?charset=utf8'
         log.debug("db: %s\n\n" % (db_url))
 
@@ -136,13 +135,21 @@ class BaseApp():
                                  kernel_json['isNotebook'],
                                  kernel_json['scriptVersionId'])
         log.debug(log_msg)
+        author_id = kernel_json['author']['userId']
+        author = self.session.query(db.User).filter(db.User.id == author_id).first()
+        if not author:
+            author = db.User(id=author_id,
+                             title=kernel_json['author']['displayName'],
+                             user_name=kernel_json['author']['userName'],
+                             tier=kernel_json['author']['tier'])
         new_kernel = db.Kernel(id=kernel_json['id'],
                                title=kernel_json['title'],
                                lang=kernel_json['aceLanguageName'],
                                notebook=kernel_json['isNotebook'],
                                votes=kernel_json['totalVotes'],
                                best_score=kernel_json['bestPublicScore'],
-                               source_version=kernel_json['scriptVersionId'])
+                               source_version=kernel_json['scriptVersionId'],
+                               author=author)
         download_url = 'https://www.kaggle.com/kernels/sourceurl/{}'
         download_url = download_url.format(new_kernel.source_version)
         try:

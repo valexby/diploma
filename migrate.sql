@@ -8,6 +8,14 @@ CREATE TABLE competition (
        PRIMARY KEY(id),
        UNIQUE(title));
 
+CREATE TABLE users (
+       id INTEGER NOT NULL AUTO_INCREMENT,
+       title VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+       user_name VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
+       tier VARCHAR(50),
+       PRIMARY KEY(id),
+       UNIQUE(title));
+
 CREATE TABLE kernel (
        id INTEGER NOT NULL,
        title VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_unicode_ci,
@@ -16,8 +24,10 @@ CREATE TABLE kernel (
        votes INTEGER,
        best_score FLOAT,
        competition_id INTEGER,
+       author_id INTEGER,
        source_version INTEGER,
        CONSTRAINT competition_kernel_fk FOREIGN KEY(competition_id) REFERENCES competition(id),
+       CONSTRAINT user_kernel_fk FOREIGN KEY(author_id) REFERENCES users(id),
        PRIMARY KEY(id));
 
 CREATE TABLE category (

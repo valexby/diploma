@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from sqlalchemy.schema import ForeignKey
 from src.models import sa, orm, DeclarativeBase
 
